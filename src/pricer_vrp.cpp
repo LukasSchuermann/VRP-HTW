@@ -339,15 +339,12 @@ SCIP_RETCODE setEnforcedCustomers(
                 countAvailable[v]--;
                 /* if there is only one available day for v left --> set as enforced customer */
                 if(countAvailable[v] == 1){
-                    bool fixed = false;
                     for(auto d : modelData->availableDays[v]){
                         if(pricerData->timetable_[v][d]){
                             pricerData->eC_[v] = d;
                             pricerData->nEC_[d]++;
-                            fixed = true;
                         }
                     }
-                    assert(fixed);
                     enforcedCustomers.push_back(v);
                     nEnforced++;
                 }
@@ -593,10 +590,10 @@ SCIP_RETCODE includeCuts(
         /* get dual values of corresponding cuts */
         if(isFarkas)
         {
-            dualvalue = SCIPgetDualfarkasKPC(pricerData->scip_, conss[c]);
+            dualvalue = SCIPgetDualfarkasKPC(conss[c]);
         }else
         {
-            dualvalue = SCIPgetDualsolKPC(pricerData->scip_, conss[c]);
+            dualvalue = SCIPgetDualsolKPC(conss[c]);
         }
 
         if(SCIPisEQ(pricerData->scip_, 0, dualvalue))
@@ -642,10 +639,10 @@ SCIP_RETCODE includeVehicleBranching(
             continue;
         if(isFarkas)
         {
-            val = SCIPgetDualfarkasNVehicle(scip, cons);
+            val = SCIPgetDualfarkasNVehicle(cons);
         }else
         {
-            val = SCIPgetDualsolNVehicle(scip, cons);
+            val = SCIPgetDualsolNVehicle(cons);
         }
         if(!SCIPisZero(scip, val))
         {
@@ -666,10 +663,10 @@ SCIP_RETCODE includeVehicleBranching(
 
         if(isFarkas)
         {
-            val = SCIPgetDualfarkasVehicle(scip, cons);
+            val = SCIPgetDualfarkasVehicle(cons);
         }else
         {
-            val = SCIPgetDualsolVehicle(scip, cons);
+            val = SCIPgetDualsolVehicle(cons);
         }
 //        cout << "val: " << val << endl;
 //        SCIPprintCons(scip, cons, nullptr);
@@ -1180,9 +1177,9 @@ SCIP_RETCODE ObjPricerVRP::includeSRCpricingData(
             continue;
         /* get dual values of corresponding cuts */
         if (isFarkas) {
-            dualvalue = SCIPgetDualfarkasSRC(scip, conss[c]);
+            dualvalue = SCIPgetDualfarkasSRC(conss[c]);
         } else {
-            dualvalue = SCIPgetDualsolSRC(scip, conss[c]);
+            dualvalue = SCIPgetDualsolSRC(conss[c]);
         }
         /* we only need to consider cuts with negative dualvalue */
         if(SCIPisNegative(scip, dualvalue))
@@ -1258,12 +1255,6 @@ SCIP_RETCODE ObjPricerVRP::generate_tours(
 
             for(auto& tvrp : bestTours)
             {
-                if(getDayVarRed)
-                {
-                    model_data *modelData = probData->getData();
-                    assert(tvrp.isFeasible(modelData));
-                    assert(false);
-                }
                 /* check for ng-path violations */
                 if(USE_DSSR)
                 {

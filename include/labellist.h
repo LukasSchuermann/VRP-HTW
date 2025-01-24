@@ -191,7 +191,6 @@ int dominance_check_enumerate(
         std::vector<LabelList*>&    oldLists,
         Label*                      label,
         SCIP_Bool                   usedLabels,
-        ObjPricerVRP*               pricerData,
         SCIP*                       scip
 );
 

@@ -70,13 +70,11 @@ private:
 };
 /** gets the dual solution of the k-paths constraint in the current LP */
 SCIP_Real SCIPgetDualsolKPC(
-        SCIP*                   scip,               /**< SCIP data structure */
         SCIP_CONS*              cons                /**< constraint data */
 );
 
 /** gets the dual Farkas value of the k-paths constraint in the current infeasible LP */
 SCIP_Real SCIPgetDualfarkasKPC(
-        SCIP*                   scip,               /**< SCIP data structure */
         SCIP_CONS*              cons                /**< constraint data */
 );
 

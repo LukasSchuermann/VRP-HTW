@@ -41,7 +41,6 @@ SCIP_DECL_BRANCHEXECPS(ObjBranchruleVehicleArc::scip_execlp)
     auto* pricerData = dynamic_cast<ObjPricerVRP*>(SCIPfindObjPricer(scip_, "VRP_Pricer"));
     model_data* modelData = probData->getData();
 
-    int narcs;
     int i, j;
     int start = 0;
     int end = 0;

@@ -194,19 +194,16 @@ SCIP_RETCODE propagateCustomer(
     int dom_active;
     int dom_old;
     vector<int> &neighbors = isFW ? pricerData->neighbors_[current_index][day] : pricerData->predecessors_[current_index][day];
-    vector<vector<bool>>& timetable = pricerData->atRoot_ ? pricerData->global_timetable_ : pricerData->timetable_;
     while(labelLists[current_index]->length_ > 0)
     {
         curr_node = labelLists[current_index]->extract_first();
         curr_label2 = curr_node->label2_;
 
-        if(calcRedCosts || curr_label2->time_ <= (double) modelData->timeWindows[0][day].end / 2) // TODO: can we make it sharp? - Prob. no!
+        if(calcRedCosts || curr_label2->time_ <= (double) modelData->timeWindows[0][day].end / 2)
         {
             last_node = nullptr;
             for(auto neighbor : neighbors)
             {
-                assert(timetable[neighbor][day]);
-
                 /* skip neighbor if ng-condition gets violated */
                 if(curr_label2->ng_memory_[neighbor])
                     continue;
@@ -229,8 +226,8 @@ SCIP_RETCODE propagateCustomer(
                 {
                     if(pricerData->enumerate_)
                     {
-                        dom_active = dominance_check_enumerate(labelLists, propLabelLists, new_label2, FALSE, pricerData, scip);
-                        dom_old = dominance_check_enumerate(labelLists, propLabelLists, new_label2, TRUE, pricerData, scip);
+                        dom_active = dominance_check_enumerate(labelLists, propLabelLists, new_label2, FALSE, scip);
+                        dom_old = dominance_check_enumerate(labelLists, propLabelLists, new_label2, TRUE, scip);
                     }else{
                         dom_active = dominance_check(labelLists, propLabelLists, new_label2, FALSE, pricerData, scip);
                         dom_old = dominance_check(labelLists, propLabelLists, new_label2, TRUE, pricerData, scip);

@@ -189,14 +189,12 @@ SCIP_RETCODE twoNodeShift(
     SCIP_Bool changed;
     int day1;
     int pos1, newpos;
-    double oldobj1, oldobj2, oldobj3;
+    double oldobj2;
     double newobj1 = 0.0, newobj2, newobj3;
-    double oldtotal, newtotal;
 
     double bestnewobj1 = 0.0, bestnewobj2 = 0.0;
     int bestnewday1 = -1, bestnewday2 = -1;
     int bestnewpos1 = -1, bestnewpos2 = -1;
-    int numimprov = 0;
 
     double chng1 = 0.0;
     double chng2;
@@ -217,7 +215,6 @@ SCIP_RETCODE twoNodeShift(
             assert(day1 >= 0);
             tourVRP tvrpday1(tvrps[day1].length_-1, modelData->dayofVehicle[day1]);
             k = 0;
-            oldobj1 = tvrps[day1].obj_;
             for (pos = 0; pos < tvrps[day1].length_; pos++)
             {
                 if (tvrps[day1].tour_[pos] == currentnode)
@@ -289,35 +286,11 @@ SCIP_RETCODE twoNodeShift(
                                 tvrpday3.tour_[pos] = tvrps[day3].tour_[pos];
                             }
                         }
-                        oldobj3 = tvrps[day3].obj_;
                         tvrpday3.obj_ = newobj3;
                         if(tvrpday3.addNode(scip, modelData, &newpos, node))
                         {
                             chng3 = tvrpday3.obj_ - newobj3;
                             newobj3 = tvrpday3.obj_;
-                            if(day1 == day2)
-                            {
-                                if(day2 == day3)
-                                {
-                                    oldtotal = oldobj1;
-                                    newtotal = newobj3;
-                                }else{
-                                    oldtotal = oldobj1 + oldobj3;
-                                    newtotal = newobj2 + newobj3;
-                                }
-                            }else if(day1 == day3)
-                            {
-                                oldtotal = oldobj1 + oldobj2;
-                                newtotal = newobj2 + newobj3;
-                            }else if(day2 == day3)
-                            {
-                                oldtotal = oldobj1 + oldobj2;
-                                newtotal = newobj1 + newobj3;
-                            }else{
-                                oldtotal = oldobj1 + oldobj2 + oldobj3;
-                                newtotal = newobj1 + newobj2 + newobj3;
-                            }
-                            assert(SCIPisEQ(scip, newtotal - oldtotal, chng1+chng2+chng3)); // TODO DELETE
                             if(SCIPisSumPositive(scip, -(chng1+chng2+chng3) - bestimprovement))
                             {
                                 bestimprovement = -(chng1+chng2+chng3);
@@ -361,7 +334,6 @@ SCIP_RETCODE twoNodeShift(
                 tvrps[bestnewday2].length_++;
                 vehicleofnode[currentnode] = bestnewday1;
                 vehicleofnode[node] = bestnewday2;
-                numimprov++;
 
                 tvrps[day1].capacity_ -= modelData->demand[currentnode];
                 tvrps[bestnewday1].capacity_ += modelData->demand[currentnode] - modelData->demand[node];

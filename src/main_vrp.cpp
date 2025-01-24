@@ -60,17 +60,11 @@ SCIP_RETCODE readArguments(
 )
 {
     char usage[SCIP_MAXSTRLEN];
-    int status;
     char* locstr;
 
     assert( argc >= 1 );
     assert( argv != nullptr );
     assert( input_file.empty() );
-
-    /* init usage text */
-    status = snprintf(usage, SCIP_MAXSTRLEN - 1, "usage: %s <path of inputfile> ", argv[0]);
-    assert( 0 <= status && status < SCIP_MAXSTRLEN );
-
 
     /* mandatory argument: inputfile */
     input_file = argv[1];
@@ -255,9 +249,6 @@ SCIP_RETCODE setUpScip(
         SCIP_CALL( SCIPsetHeuristics(*scip, SCIP_PARAMSETTING_OFF, TRUE) );
     }
 
-    /* include robust cuts separator */
-//    SCIP_CALL(SCIPincludeObjSepa(*scip, new ObjCvrpSep(*scip), TRUE));
-
     /* include propagator */
     SCIP_CALL(SCIPincludeObjProp(*scip, new ObjPropVarFixing(*scip, false), TRUE));
 
@@ -318,28 +309,6 @@ SCIP_RETCODE setUpScip(
     return SCIP_OKAY;
 }
 
-static
-SCIP_RETCODE addInitTours(
-    SCIP*           scip,
-    vector<int>&    hash_day,
-    SCIP*           scip_new
-)
-{
-    char algoName[] = "initTour";
-    auto* probData = dynamic_cast<vrp::ProbDataVRP*>(SCIPgetObjProbData(scip));
-    for(auto var : probData->vars_)
-    {
-        if(SCIPgetSolVal(scip, SCIPgetBestSol(scip), var) < 0.5)
-            continue;
-        tourVRP tvrp;
-        auto* vardata = dynamic_cast<ObjVarDataVRP*>(SCIPgetObjVardata(scip, var));
-        tvrp.copy(vardata->tourVrp_);
-        tvrp.setDay(hash_day[vardata->getDay()]);
-        SCIP_CALL(add_tour_variable(scip_new, dynamic_cast<vrp::ProbDataVRP*>(SCIPgetObjProbData(scip_new)),
-                                    FALSE, TRUE, algoName, tvrp));
-    }
-    return SCIP_OKAY;
-}
 
 static
 SCIP_RETCODE readSolution(
@@ -379,35 +348,6 @@ SCIP_RETCODE readSolution(
     }
     return SCIP_OKAY;
 }
-
-/** print solution */
-static
-SCIP_RETCODE printSolution(
-        SCIP*       scip,
-        std::string& outfile
-)
-{
-    auto* probData = dynamic_cast<vrp::ProbDataVRP*>(SCIPgetObjProbData(scip));
-    ofstream solfile;
-    solfile.open(outfile, std::ios_base::app);
-    cout << "PRINT SOLUTION: " << outfile << endl;
-    SCIP_Sol* sol = SCIPgetBestSol(scip);
-    for(auto var : probData->vars_)
-    {
-        if(SCIPgetSolVal(scip, sol, var) > 0.5)
-        {
-            tourVRP tvrp = dynamic_cast<ObjVarDataVRP*>(SCIPgetObjVardata(scip, var))->tourVrp_;
-            assert(tvrp.capacity_ <= probData->getData()->max_caps[tvrp.getDay()]);
-            solfile << tvrp.getDay() << " " << tvrp.obj_ << " " << tvrp.capacity_ << " " << tvrp.length_;
-            for(auto v : tvrp.tour_)
-                solfile << " " << v;
-            solfile << endl;
-        }
-    }
-
-    return SCIP_OKAY;
-}
-
 
 /** output solution */
 static
@@ -533,18 +473,6 @@ SCIP_RETCODE runColumnGenerationModel(
     SCIP_CALL(readArguments(argc, argv, input_file, &branchingRule, &seed, sol_file, out_file, &withSol, &useSRC,
                             &nMaxSRC, &useKPC, &gap_decay_rc, &max_depth_rc, &maxSRC_rc, &useArcRC, &useVeAssRC,
                             &noRootFixing, &branchingFrac, &noConflictEC, &timeout));
-
-    if(withSol){
-        // TODO: currently hard-coded due to simexpal
-        size_t dotPos = input_file.rfind('.'); // Find the last dot in the string
-        if (dotPos == std::string::npos) {
-            // No extension found, return the original with ".sol" appended
-            throw std::runtime_error("WRONG FILE NAME");
-        }
-        // Replace only the last extension with ".sol"
-        sol_file = input_file.substr(0, dotPos) + ".sol";
-    }
-
 
     if(withSol){
         std::cout << "Include solution from file " << sol_file << std::endl;

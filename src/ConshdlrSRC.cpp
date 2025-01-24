@@ -149,21 +149,13 @@ SCIP_DECL_CONSDELETE(ConshdlrSRC::scip_delete)
 /** transforms constraint data into data belonging to the transformed problem */
 SCIP_DECL_CONSTRANS(ConshdlrSRC::scip_trans)
 {   /*lint --e{715}*/
-    SCIP_CONSDATA* sourcedata;
-    SCIP_CONSDATA* targetdata;
+    SCIP_CONSDATA* targetdata = nullptr;
 
     assert(conshdlr != nullptr);
     assert(strcmp(SCIPconshdlrGetName(conshdlr), "SRC") == 0);
     assert(SCIPgetStage(scip) == SCIP_STAGE_TRANSFORMING);
     assert(sourcecons != nullptr);
     assert(targetcons != nullptr);
-
-    sourcedata = SCIPconsGetData(sourcecons);
-    assert(sourcedata != nullptr);
-
-//    /* create constraint data for target constraint */
-//    SCIP_CALL( consdataCreate(scip, &targetdata,
-//                              sourcedata->customer, sourcedata->day, sourcedata->type, sourcedata->node) );
 
     /* create target constraint */
     SCIP_CALL( SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
@@ -373,12 +365,9 @@ SCIP_DECL_CONSPRINT(ConshdlrSRC::scip_print)
 
 /** gets the dual solution of the subset row constraint in the current LP */
 SCIP_Real SCIPgetDualsolSRC(
-        SCIP*                   scip,               /**< SCIP data structure */
         SCIP_CONS*              cons                /**< constraint data */
 ){
     SCIP_CONSDATA* consdata;
-
-    assert(scip != nullptr);
 
     if( strcmp(SCIPconshdlrGetName(SCIPconsGetHdlr(cons)), CONSHDLR_NAME4) != 0 )
     {
@@ -398,12 +387,9 @@ SCIP_Real SCIPgetDualsolSRC(
 
 /** gets the dual Farkas value of the subset row constraint in the current infeasible LP */
 SCIP_Real SCIPgetDualfarkasSRC(
-        SCIP*                   scip,               /**< SCIP data structure */
         SCIP_CONS*              cons                /**< constraint data */
 ){
     SCIP_CONSDATA* consdata;
-
-    assert(scip != nullptr);
 
     if( strcmp(SCIPconshdlrGetName(SCIPconsGetHdlr(cons)), CONSHDLR_NAME4) != 0 )
     {

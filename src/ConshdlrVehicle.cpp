@@ -158,11 +158,7 @@ SCIP_RETCODE consdataAddVarsToCut(
         if(varInRow(var, consdata->cut))
             continue;
 
-        int nind = SCIProwGetNNonz(consdata->cut);
-
         SCIP_CALL( SCIPaddVarToRow(scip, consdata->cut, var, 1.0) );
-
-        assert(nind + 1 == SCIProwGetNNonz(consdata->cut));
     }
 
     return SCIP_OKAY;
@@ -242,7 +238,6 @@ SCIP_DECL_CONSDELETE(ConshdlrVehicle::scip_delete)
 /** transforms constraint data into data belonging to the transformed problem */
 SCIP_DECL_CONSTRANS(ConshdlrVehicle::scip_trans)
 {   /*lint --e{715}*/
-    SCIP_CONSDATA* sourcedata;
     SCIP_CONSDATA* targetdata;
 
     assert(conshdlr != nullptr);
@@ -251,8 +246,6 @@ SCIP_DECL_CONSTRANS(ConshdlrVehicle::scip_trans)
     assert(sourcecons != nullptr);
     assert(targetcons != nullptr);
 
-    sourcedata = SCIPconsGetData(sourcecons);
-    assert(sourcedata != nullptr);
 
     /* create target constraint */
     SCIP_CALL( SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
@@ -447,12 +440,9 @@ SCIP_DECL_CONSPRINT(ConshdlrVehicle::scip_print)
 
 /** gets the dual solution of the vehicle constraint in the current LP */
 SCIP_Real SCIPgetDualsolVehicle(
-        SCIP*                   scip,               /**< SCIP data structure */
         SCIP_CONS*              cons                /**< constraint data */
 ){
     SCIP_CONSDATA* consdata;
-
-    assert(scip != nullptr);
 
     if( strcmp(SCIPconshdlrGetName(SCIPconsGetHdlr(cons)), CONSHDLR_NAME4) != 0 )
     {
@@ -472,12 +462,9 @@ SCIP_Real SCIPgetDualsolVehicle(
 
 /** gets the dual Farkas value of the vehicle constraint in the current infeasible LP */
 SCIP_Real SCIPgetDualfarkasVehicle(
-        SCIP*                   scip,               /**< SCIP data structure */
         SCIP_CONS*              cons                /**< constraint data */
 ){
     SCIP_CONSDATA* consdata;
-
-    assert(scip != nullptr);
 
     if( strcmp(SCIPconshdlrGetName(SCIPconsGetHdlr(cons)), CONSHDLR_NAME4) != 0 )
     {
