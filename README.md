@@ -19,12 +19,15 @@ $ mkdir build
 $ cd build
 $ cmake .. -DSCIP_DIR=/path/to/scip/installation
 $ make
-$ ./bin/vrp <path-to-instance-json-file.json> 
-    [-w <appointment window length in sec (optional; default 0)>] 
-    [-o <output json file (optional; default used if no name is provided)>]
-    [-s <input solution json file (optional)>]
-    [-a <objective function parameters (delay, travel time, encounter probability) (default: 1, 0, 0) (mandatory) >]
-    [-g <value for Gamma (optional; default 0)>]
-    [-v <activate vehicle-assignment branching (optional)>]
-    [-output <path to file for printing stats (optional)>]
+$ ./vrp <path-to-instance-json-file.json> 
+    [-b <branching rule (options: 1 vehicle assignment, 2 arc flow, 3 vehicle arc; default: 1)>] 
+    [-s <seed (options >= 0)>]
+    [-sol <path-to-solution-file>]
+    [-out <path-to-output-file>]
+    [-src <maximum numbers of subset row cuts (options >= 0)>]
+    [-nkpc <deactivate k-path cut separation>]
+    [-bf <branching decision value (options in [0.0, 1.0]; 1.0 for random branching)>]
+    [-rcf <reduced cost fixing properties (decay, max_depth, maxNumSRC)>]
+    [-nR <deactivate root reduced cost fixing>]
+    [-timeout <set time limit>]
 ```
