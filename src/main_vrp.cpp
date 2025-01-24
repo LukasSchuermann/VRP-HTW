@@ -51,11 +51,8 @@ SCIP_RETCODE readArguments(
     double*             gap_decay,
     int*                max_depth,
     int*                maxSRCrcf,
-    bool*               useArcRC,
-    bool*               useVeAssRC,
     bool*               noRootFixing,
     double*             branchingFrac,
-    bool*               conflictEC,
     int*                timeout
 )
 {
@@ -177,15 +174,8 @@ SCIP_RETCODE readArguments(
             *gap_decay = std::atof(argv[i++]);
             *max_depth = std::atoi(argv[i++]);
             *maxSRCrcf = std::atoi(argv[i]);
-        }else if ( ! strcmp(argv[i], "-nArcRC"))
-        {
-            *useArcRC = false;
-        }else if ( ! strcmp(argv[i], "-nVeAssRC")){
-            *useVeAssRC = false;
         }else if ( ! strcmp(argv[i], "-nR")){
             *noRootFixing = true;
-        }else if ( ! strcmp(argv[i], "-noconf")){
-            *conflictEC = true;
         }else if ( ! strcmp(argv[i], "-timeout")){
             if( i == argc - 1 || (! strncmp(argv[i+1], "-",1)))
             {
@@ -462,17 +452,14 @@ SCIP_RETCODE runColumnGenerationModel(
     double gap_decay_rc = 0.8;
     int max_depth_rc = 0;
     int maxSRC_rc = 75;
-    bool useArcRC = true;
-    bool useVeAssRC = true;
     bool noRootFixing = false;
     /* branching parameters */
     int branchingRule = BRANCHTYPE_DAYVAR;
     double branchingFrac = 0.5;
-    bool noConflictEC = false;
 
     SCIP_CALL(readArguments(argc, argv, input_file, &branchingRule, &seed, sol_file, out_file, &withSol, &useSRC,
-                            &nMaxSRC, &useKPC, &gap_decay_rc, &max_depth_rc, &maxSRC_rc, &useArcRC, &useVeAssRC,
-                            &noRootFixing, &branchingFrac, &noConflictEC, &timeout));
+                            &nMaxSRC, &useKPC, &gap_decay_rc, &max_depth_rc, &maxSRC_rc, &noRootFixing, &branchingFrac,
+                            &timeout));
 
     if(withSol){
         std::cout << "Include solution from file " << sol_file << std::endl;
@@ -484,10 +471,6 @@ SCIP_RETCODE runColumnGenerationModel(
     }else{
         assert(branchingRule == BRANCHTYPE_VEHICLEARC);
         std::cout << "Activate: Vehicle Arc Branching" << std::endl;
-    }
-
-    if(!noConflictEC){
-        std::cout << "Active Enforced Customer conflict detection" << std::endl;
     }
 
     if(!useKPC)
@@ -527,10 +510,7 @@ SCIP_RETCODE runColumnGenerationModel(
     pricer->gap_decay_rc_ = gap_decay_rc;
     pricer->max_depth_rc_ = max_depth_rc;
     pricer->maxSRC_rc_ = maxSRC_rc;
-    pricer->conflictEC_ = !noConflictEC;
     auto *prop = dynamic_cast<ObjPropVarFixing*>(SCIPfindObjProp(scip, "varFixing"));
-    prop->withVeAss_ = useVeAssRC;
-    prop->withArcFlow_ = useArcRC;
     prop->noRootFixing_ = noRootFixing;
 
     SCIP_CALL(SCIPsolve(scip));

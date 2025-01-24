@@ -308,49 +308,48 @@ SCIP_RETCODE setEnforcedCustomers(
         std::cout << std::endl;
     }
 
-    if(pricerData->conflictEC_){
-        /* try to check for unreachable neighbors of enforced customers */
-        unsigned int nEnforced = enforcedCustomers.size();
-        for(unsigned int i = 0; i < nEnforced; i++){
-            int u = enforcedCustomers[i];
-            int day = pricerData->eC_[u];
-            /* check every customer v available on that day if we can reach u from that or vice versa */
-            for(auto v : modelData->neighbors[0][day]){
-                if(!pricerData->timetable_[v][day]){
-                    continue;
-                }
-                if(u == v){
-                    continue;
-                }
-                /* if both directions not reachable in time */
-                if(modelData->adjacency_k[day][u][v] || modelData->adjacency_k[day][v][u]) {
-                    continue;
-                }
-                pricerData->nConflicts_++;
-                /* can not be an enforced customer */
-                if(pricerData->eC_[v] != -1){
-                    std::cout << "EC on day: " << pricerData->eC_[v] << std::endl;
-                    throw std::runtime_error("Shall not happen!");
-                }
-                if(countAvailable[v] <= 1){
-                    throw std::runtime_error("Infeasible NODE! Cannot happen!");
-                }
-                pricerData->timetable_[v][day] = false;
-                countAvailable[v]--;
-                /* if there is only one available day for v left --> set as enforced customer */
-                if(countAvailable[v] == 1){
-                    for(auto d : modelData->availableDays[v]){
-                        if(pricerData->timetable_[v][d]){
-                            pricerData->eC_[v] = d;
-                            pricerData->nEC_[d]++;
-                        }
+    /* Conflict analysis: Try to check for unreachable neighbors of enforced customers */
+    unsigned int nEnforced = enforcedCustomers.size();
+    for(unsigned int i = 0; i < nEnforced; i++){
+        int u = enforcedCustomers[i];
+        int day = pricerData->eC_[u];
+        /* check every customer v available on that day if we can reach u from that or vice versa */
+        for(auto v : modelData->neighbors[0][day]){
+            if(!pricerData->timetable_[v][day]){
+                continue;
+            }
+            if(u == v){
+                continue;
+            }
+            /* if both directions not reachable in time */
+            if(modelData->adjacency_k[day][u][v] || modelData->adjacency_k[day][v][u]) {
+                continue;
+            }
+            pricerData->nConflicts_++;
+            /* can not be an enforced customer */
+            if(pricerData->eC_[v] != -1){
+                std::cout << "EC on day: " << pricerData->eC_[v] << std::endl;
+                throw std::runtime_error("Shall not happen!");
+            }
+            if(countAvailable[v] <= 1){
+                throw std::runtime_error("Infeasible NODE! Cannot happen!");
+            }
+            pricerData->timetable_[v][day] = false;
+            countAvailable[v]--;
+            /* if there is only one available day for v left --> set as enforced customer */
+            if(countAvailable[v] == 1){
+                for(auto d : modelData->availableDays[v]){
+                    if(pricerData->timetable_[v][d]){
+                        pricerData->eC_[v] = d;
+                        pricerData->nEC_[d]++;
                     }
-                    enforcedCustomers.push_back(v);
-                    nEnforced++;
                 }
+                enforcedCustomers.push_back(v);
+                nEnforced++;
             }
         }
     }
+
 
     return SCIP_OKAY;
 }

@@ -92,7 +92,6 @@ public:
     int                                     nRCLabelCalls_ = 0;
     long                                    labelTime_ = 0;
     int                                     nLabelCalls_ = 0;
-    bool                                    conflictEC_ = false;
     int                                     nConflicts_ = 0;
 
     /** Constructs the pricer object with the data needed */
