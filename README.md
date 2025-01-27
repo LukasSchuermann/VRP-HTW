@@ -17,7 +17,7 @@ https://scipopt.org/#scipoptsuite
 ```markdown
 $ mkdir build
 $ cd build
-$ cmake .. -DSCIP_DIR=/path/to/scip/installation
+$ cmake .. -DSCIP_DIR="/path/to/scip/installation"
 $ make
 $ ./vrp <path-to-instance-json-file.json> 
     [-b <branching rule (options: 1 vehicle assignment, 2 arc flow, 3 vehicle arc; default: 1)>] 
