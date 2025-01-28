@@ -86,8 +86,8 @@ The following steps need to be followed to use our code:
      # And add the following code in line 12478 in lp.c
      if(lp->probing) //TODO: Be careful! Not checked if problematic
      {
-     lp->solved = FALSE;
-     lp->lpsolstat = SCIP_LPSOLSTAT_NOTSOLVED;
+        lp->solved = FALSE;
+        lp->lpsolstat = SCIP_LPSOLSTAT_NOTSOLVED;
      }
      ```
   
