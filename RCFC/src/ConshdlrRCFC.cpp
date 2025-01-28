@@ -16,8 +16,6 @@ struct SCIP_ConsData
     SCIP_Row*           cut;            /**< Corresponding row in the LP */
     SCIP_VAR**          vars;           /**< variables of the constraint */
     int                 nvars;          /**< number of variables in the constraint */
-//    vector<int>         enforcedCust;   /**< customers that have to be visited by vars of constraint */
-//    int                 day;            /**< var_day, if all vars are of the same day, else -1 */
 };
 
 /** local methods */
@@ -48,7 +46,6 @@ SCIP_RETCODE addVarsToCons(
     assert(consdata->cut != nullptr);
     for(int i = 0; i < consdata->nvars; i++)
     {
-//        SCIPprintVar(scip, consdata->vars[i], nullptr);
         SCIP_CALL(SCIPaddVarToRow(scip, consdata->cut, consdata->vars[i], 1));
     }
 
@@ -94,8 +91,7 @@ SCIP_RETCODE fixVariables(
 ){
     auto *probData = dynamic_cast<vrp::ProbDataVRP *>(SCIPgetObjProbData(scip));
     auto *pricerData = dynamic_cast<ObjPricerVRP *>(SCIPfindObjPricer(scip, "VRP_Pricer"));
-//    cout << "FIX " << fixableVars.size() << " TOUR-VARIABLES TO 1  (" << SCIPnodeGetNumber(SCIPgetCurrentNode(scip)) << " -> d=" << SCIPnodeGetDepth(
-//            SCIPgetCurrentNode(scip))<< ")" << endl;
+
 
     long long int current_node = SCIPnodeGetNumber(SCIPgetCurrentNode(scip));
     pricerData->tree_data_[current_node].gotFixed = true;
@@ -140,7 +136,6 @@ SCIP_RETCODE exactBranching(
 ){
     SCIP_Bool cutoff, lperror;
     long long int old_iter = SCIPgetNLPIterations(scip);
-//    auto start = std::chrono::steady_clock::now();
     SCIPstartProbing(scip);
     SCIPchgVarUbProbing(scip, var, 0.0);
 
@@ -148,7 +143,6 @@ SCIP_RETCODE exactBranching(
 
 
     obj->LP_iters_exact_ += (SCIPgetNLPIterations(scip) - old_iter);
-//    std::cout << "LP " << SCIPgetLPObjval(scip) << " VS CO " << SCIPgetCutoffbound(scip) << std::endl;
     if(SCIPisGE(scip, SCIPgetLPObjval(scip), SCIPgetCutoffbound(scip)))
     {
         assert(cutoff);
@@ -158,8 +152,6 @@ SCIP_RETCODE exactBranching(
     }
 
     SCIPendProbing(scip);
-//    auto end = std::chrono::steady_clock::now();
-//    obj->time_exact_ += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
 
     return SCIP_OKAY;
 }
@@ -174,7 +166,6 @@ SCIP_RETCODE heuristicNoMove(
         double                  varLPVal,
         SCIP_Bool*              success
 ){
-//    auto start = std::chrono::steady_clock::now();
     SCIP_Bool cutoff, lperror;
     SCIP_Var* var = SCIPcolGetVar(col);
     SCIP_LPI* lpi;
@@ -198,7 +189,7 @@ SCIP_RETCODE heuristicNoMove(
         SCIPsolveProbingLP(scip, k, &lperror, &cutoff);
         nIters += k;
         k = MAX((int) (obj->iter_perc_ * nIters), obj->iter_init_);
-        local_lpVal = SCIPluklpiColGetNewLPval(lpi, index);
+        local_lpVal = SCIPlpiColGetNewLPvalRCFC(lpi, index);
     }
 
     if(SCIPisEQ(scip, local_lpVal, varLPVal)){
@@ -224,7 +215,6 @@ SCIP_RETCODE heuristicExtended(
         double                  varLPVal,
         SCIP_Bool*              success
 ){
-//    auto start = std::chrono::steady_clock::now();
     SCIP_Bool cutoff, lperror;
     SCIP_Var* var = SCIPcolGetVar(col);
     SCIP_LPI* lpi;
@@ -232,13 +222,11 @@ SCIP_RETCODE heuristicExtended(
     int k;
     int nIters;
 
-//    assert(SCIPisEQ(scip, start_lpval, SCIPgetCutoffbound(scip))); //TODO: might fail if optimal solution is not know
     double local_gap = gap_abs;
     double local_lpVal = varLPVal;
     double orig_gap = local_gap;
     double addedObj = 0;
     double init_steepness;
-//    std::cout << "!!!!!!!!!!!!!!! NEW VERSION !!!!!!!!!!!!!!!" << std::endl;
     int iter = 0;
 
     double steepness = gap_abs / varLPVal;
@@ -250,9 +238,8 @@ SCIP_RETCODE heuristicExtended(
     SCIPstartProbing(scip);
     /* move from one optimum to the optimum for the next objective function */
     while (SCIPisGT(scip, local_lpVal, 0)) {
-        if(steepness > obj->lowest_fail_ * obj->factor_) //TODO: parameter
+        if(steepness > obj->lowest_fail_ * obj->factor_)
         {
-//            std::cout << "TOO STEEP!!!!! --> " << steepness << " > " <<  obj->lowest_fail_ * obj->factor_ << std::endl;
             tooSteep = true;
             obj->steepness_skip_++;
 
@@ -263,31 +250,21 @@ SCIP_RETCODE heuristicExtended(
 
         k = obj->iter_init_;
         nIters = 0;
-//        std::cout << "Iteration " << iter << " | value = " << local_lpVal << " | objchg = ";
-//        std::cout << local_gap / local_lpVal << " | gap = " << local_gap << " | origgap = " << orig_gap;
-//        std::cout << " | nLP-Iter so far: " << SCIPgetNLPIterations(scip) - nOldIters;
-//        std::cout << " | current steepness: " << steepness / currentLP_abs << std::endl;
         SCIPchgVarObjProbing(scip, var, SCIPvarGetObj(var) + local_gap / local_lpVal);
 
         /* First iteration */
-//        SCIPsolveProbingLPWithPricing(scip, false, false, k, &lperror, &cutoff);
         SCIPsolveProbingLP(scip, k, &lperror, &cutoff);
-        local_lpVal = SCIPluklpiColGetNewLPval(lpi, index);
+        local_lpVal = SCIPlpiColGetNewLPvalRCFC(lpi, index);
         /* Abort Probing once x_i = 0 */
         while (SCIPisGT(scip, local_lpVal, 0)) {
             orig_gap = SCIPgetCutoffbound(scip) - (SCIPgetLPObjval(scip) - addedObj * local_lpVal);
-//            assert(SCIPisEQ(scip, (orig_gap/local_lpVal)/currentLP_abs, (steepness + (SCIPgetCutoffbound(scip) - SCIPgetLPObjval(scip))/local_lpVal) / currentLP_abs));
-//            std::cout << "STEEP?!: " << (orig_gap/local_lpVal)/currentLP_abs << " VS: " <<
-//            (steepness + (SCIPgetCutoffbound(scip) - SCIPgetLPObjval(scip))/local_lpVal) / currentLP_abs << std::endl;
-
             if(SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL){
                 break;
             }
 
             /* abort early if objective function is too steep relative to lp value of x_i */
-            if((orig_gap/local_lpVal) > obj->lowest_fail_ * obj->factor_) //TODO: parameter
+            if((orig_gap/local_lpVal) > obj->lowest_fail_ * obj->factor_)
             {
-//                std::cout << "TOO STEEP!!!!! --> " << (orig_gap/local_lpVal) << " > " <<  obj->lowest_fail_ * obj->factor_ << std::endl;
                 tooSteep = true;
                 obj->steepness_skip_++;
 
@@ -296,13 +273,9 @@ SCIP_RETCODE heuristicExtended(
 
             nIters += k;
             k = MAX((int) (obj->iter_perc_ * nIters), obj->iter_init_);
-//            std::cout << "\tLP-val: " << local_lpVal << "\tObj: " << SCIPgetLPObjval(scip) << " \toriggap: " << orig_gap;
-//            std::cout << " k: " << k << " nIter " << nIters << " status " << SCIPgetLPSolstat(scip) <<
-//            " current steepness: " << (steepness + (SCIPgetCutoffbound(scip) - SCIPgetLPObjval(scip))/local_lpVal) / currentLP_abs << std::endl;
-//            SCIPsolveProbingLPWithPricing(scip, false, false, -1, &lperror, &cutoff);
             SCIPsolveProbingLP(scip, k, &lperror, &cutoff);
 
-            local_lpVal = SCIPluklpiColGetNewLPval(lpi, index);
+            local_lpVal = SCIPlpiColGetNewLPvalRCFC(lpi, index);
             if(SCIPisGT(scip, SCIPgetLPObjval(scip), SCIPgetCutoffbound(scip)))
             {
                 tooSteep = true;
@@ -316,37 +289,28 @@ SCIP_RETCODE heuristicExtended(
         }
 
         iter++;
-        if(SCIPisZero(scip, local_lpVal) || tooSteep) //TODO: Make more pretty
+        if(SCIPisZero(scip, local_lpVal) || tooSteep)
         {
-//            std::cout << "TOO STEEP" << std::endl;
             auto end_t = std::chrono::high_resolution_clock::now();
             obj->lp_solving_time_ += std::chrono::duration_cast<std::chrono::milliseconds>(end_t - obj->start_time_).count();
             break;
         }
         assert(SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL);
-        assert(SCIPvarGetLPSol(var) == SCIPluklpiColGetNewLPval(lpi, index));
-//        local_lpVal = SCIPvarGetLPSol(var);
-//        if(SCIPgetLPSolstat(scip) != SCIP_LPSOLSTAT_OPTIMAL)
-//            break;
+        assert(SCIPvarGetLPSol(var) == SCIPlpiColGetNewLPvalRCFC(lpi, index));
+
         if (SCIPisGE(scip, SCIPgetLPObjval(scip), SCIPgetCutoffbound(scip)))
         {
-//            std::cout << "Without pricing we could fix -> check pricing! " << SCIPgetLPObjval(scip) << " >= " << SCIPgetCutoffbound(scip)<< std::endl;
-
             SCIPsolveProbingLPWithPricing(scip, false, false, -1, &lperror, &cutoff);
             if (SCIPisGE(scip, SCIPgetLPObjval(scip), SCIPgetCutoffbound(scip)))
             {
-//                std::cout << "Heuristic CAN FIX IT with nLPIterations: " << (SCIPgetNLPIterations(scip) - nOldIters) << std::endl;
                 obj->nFixedHeurExtv2_++;
                 *success = true;
                 break;
             }else if(SCIPisZero(scip, SCIPvarGetLPSol(var))){
-//                std::cout << "ZERO AFTER PRICING" << std::endl;
                 break;
             }
             /* potentially we want to stop after first pricing iteration -> too expensive */
-            if(obj->used_Pricing_){ //} && SCIPvarGetLPSol(var) < varLPVal / 1){
-//                std::cout << SCIPvarGetLPSol(var) << " < " << varLPVal << std::endl;
-//                std::cout << "Break after first iteration! nVars in Cut: " << obj->nAdded_Vars_ + 1 << std::endl;
+            if(obj->used_Pricing_){
                 break;
             }
         }
@@ -361,7 +325,6 @@ SCIP_RETCODE heuristicExtended(
     {
         if(obj->lowest_fail_ > init_steepness)
         {
-//            std::cout << "Change from " << obj->lowest_fail_ << " to " << init_steepness << std::endl;
             obj->lowest_fail_ = init_steepness;
         }
     }
@@ -396,10 +359,10 @@ SCIP_RETCODE checkFixing(
         double gap_abs = SCIPgetCutoffbound(scip) - SCIPgetLPObjval(scip);
         if(SCIPisInfinity(scip, abs(gap_abs)))
             break;
-        SCIP_COL** lpicols = SCIPlukGetlpiCols(scip);
-//        assert(index <= SCIPgetNLPCols(scip));
+        SCIP_COL** lpicols = SCIPGetlpiColsRCFC(scip);
+
         SCIP_Col* col = lpicols[index];
-        if(col == nullptr || SCIPcolGetBasisStatus(col) != SCIP_BASESTAT_BASIC) //TODO: why does this happen?
+        if(col == nullptr || SCIPcolGetBasisStatus(col) != SCIP_BASESTAT_BASIC)
             continue;
         SCIP_Var* var = SCIPcolGetVar(col);
         auto varLPval = SCIPcolGetPrimsol(col);
@@ -573,7 +536,6 @@ SCIP_DECL_CONSDELETE(ConshdlrRCFC::scip_delete)
 SCIP_DECL_CONSENFOLP(ConshdlrRCFC::scip_enfolp)
 {
 //    return SCIP_OKAY;
-
     if(stopfixing_)
         return SCIP_OKAY;
     if(SCIPinProbing(scip))
@@ -582,10 +544,8 @@ SCIP_DECL_CONSENFOLP(ConshdlrRCFC::scip_enfolp)
         return SCIP_OKAY;
     if(SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_NOTSOLVED || SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_INFEASIBLE)
         return SCIP_OKAY;
-//   if(SCIPgetDepth(scip) % 2 == 1)
-//        return SCIP_OKAY;
-//    if(SCIPgetDepth(scip) > 5)
-//        return SCIP_OKAY;
+
+    /* Our SCIP installation has issue if in probing mode when hitting the time limit */
     if(SCIPgetSolvingTime(scip) > 3590){
         return SCIP_OKAY;
     }
@@ -606,7 +566,6 @@ SCIP_DECL_CONSENFOLP(ConshdlrRCFC::scip_enfolp)
      * since impact of the other variables comes too late */
     if(onlyFrac_ && gap_rel < root_gap_ / onlyFracGap_){
         onlyFrac = true;
-//        return SCIP_OKAY;
     }
 
 
@@ -632,22 +591,20 @@ SCIP_DECL_CONSENFOLP(ConshdlrRCFC::scip_enfolp)
         lowest_fail_ = init_fail_factor_ * pricerData->tree_data_[SCIPnodeGetNumber(SCIPgetFocusNode(scip))].node_lowest_fail;
     }
 
-//    std::cout << "Call propagator at node " << SCIPnodeGetNumber(SCIPgetFocusNode(scip)) << " with LP: " <<
-//              SCIPgetLPObjval(scip) << " and rel gap: " << gap_rel << "% - depth: " << SCIPgetDepth(scip) << std::endl;
     lastNode_ = SCIPnodeGetNumber(SCIPgetFocusNode(scip));
 
     assert(SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL);
 
-    SCIP_COL** lpicols = SCIPlukGetlpiCols(scip);
+    SCIP_COL** lpicols = SCIPGetlpiColsRCFC(scip);
     std::vector<int> checkLPIcols;
-    for(int i = 0; i < SCIPlukGetNlpiCols(scip); i++)
+    for(int i = 0; i < SCIPGetNlpiColsRCFC(scip); i++)
     {
         SCIP_Col* col = lpicols[i];
         if(SCIPcolGetLb(col) > 0.5)
             continue;
         if(onlyFrac && SCIPisGE(scip, SCIPcolGetPrimsol(col), 0.9))
             continue;
-        if(SCIPisGE(scip, SCIPcolGetPrimsol(col), minvalue_)) //TODO: minvalue
+        if(SCIPisGE(scip, SCIPcolGetPrimsol(col), minvalue_))
         {
             checkLPIcols.push_back(i);
         }
@@ -667,12 +624,8 @@ SCIP_DECL_CONSENFOLP(ConshdlrRCFC::scip_enfolp)
     nonViolatedCut_ = false;
     noChange_ = false;
 
-//    std::cout << "\tcheck fixing for " << checkLPIcols.size() << " variables" << std::endl;
     SCIP_CALL(checkFixing(scip, this, checkLPIcols, result, onlyFrac));
 
-    if(*result == SCIP_CUTOFF || *result == SCIP_REDUCEDDOM || *result == SCIP_SEPARATED)
-    {
-    }
     /* update tree data for lowest fail */
     pricerData->tree_data_[SCIPnodeGetNumber(SCIPgetFocusNode(scip))].node_lowest_fail = lowest_fail_;
 
