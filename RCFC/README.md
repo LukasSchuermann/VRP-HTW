@@ -84,7 +84,7 @@ The following steps need to be followed to use our code:
      if( lp->flushed && lp->solved && !(lp->probing && lp->lpsolstat == SCIP_LPSOLSTAT_ITERLIMIT) )
      #
      # And add the following code in line 12478 in lp.c
-     if(lp->probing) //TODO: Be careful! Not checked if problematic
+     if(lp->probing)
      {
         lp->solved = FALSE;
         lp->lpsolstat = SCIP_LPSOLSTAT_NOTSOLVED;
