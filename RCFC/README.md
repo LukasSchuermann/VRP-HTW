@@ -129,5 +129,5 @@ $ make
 ```
 Now, we can execute our algorithm. For example:
 ```markdown
-$ ./vrp ../../instances/vrp-htw/r101_n20_p0.6.json -p 1
+$ ./vrp ../../instances/vrp-htw/r101_n40_p0.6.json -p 1
 ```
