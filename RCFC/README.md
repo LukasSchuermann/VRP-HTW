@@ -9,7 +9,7 @@ For an efficient implementation of the RCFC method, we want to stop the (primal)
 As a workaround, we called the simplex algorithm with a limited number of iterations and checked in between each run.
 For that, we need to add a function to SCIP that yields the primal solution of a column, even when the simplex is not terminated yet.
 
-**NOTICE**: Since we use column generation, the following adaptations differ in step (Last part of step 4) from the instructions in our original RCFC project (https://github.com/LukasSchuermann/MILP/tree/main/rcfc)
+**NOTICE**: Since we use column generation, the following adaptations differ in step (last part of step 4) from the instructions in our original RCFC project (https://github.com/LukasSchuermann/MILP/tree/main/rcfc).
 
 The following steps need to be followed to use our code:
   1. Download the source code of the SCIP Optimization Suite from https://scipopt.org/index.php#download (we used version 9.1.1)
