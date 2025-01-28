@@ -1,6 +1,6 @@
 # RCFC
 
-This project contains the implementation of the RCFC methods for MILPs of my PhD thesis.
+This project contains the implementation of the RCFC methods for MILPs of my PhD thesis implemented for the VRP-HTW.
 It is implementend in C++ using the MINLP solver SCIP.
 
 ## Requirements
@@ -8,6 +8,8 @@ It is implementend in C++ using the MINLP solver SCIP.
 For an efficient implementation of the RCFC method, we want to stop the (primal) simplex algorithm as soon as the considered basic variable exceeds a value.
 As a workaround, we called the simplex algorithm with a limited number of iterations and checked in between each run.
 For that, we need to add a function to SCIP that yields the primal solution of a column, even when the simplex is not terminated yet.
+
+**NOTICE**: Since we use column generation, the following adaptations differ in step (last part of step 4) from the instructions in our original RCFC project (https://github.com/LukasSchuermann/MILP/tree/main/rcfc).
 
 The following steps need to be followed to use our code:
   1. Download the source code of the SCIP Optimization Suite from https://scipopt.org/index.php#download (we used version 9.1.1)
@@ -82,7 +84,15 @@ The following steps need to be followed to use our code:
      if( lp->flushed && lp->solved )
      # by:
      if( lp->flushed && lp->solved && !(lp->probing && lp->lpsolstat == SCIP_LPSOLSTAT_ITERLIMIT) )
+     #
+     # And add the following code in line 12478 in lp.c
+     if(lp->probing)
+     {
+        lp->solved = FALSE;
+        lp->lpsolstat = SCIP_LPSOLSTAT_NOTSOLVED;
+     }
      ```
+  
   6. In "soplex/src/" we need to add the following code to the corresponding files:
      ```markdown
      # Add this function to the SoPlexBase class in soplex.h (e.g. at line 664)
@@ -119,5 +129,5 @@ $ make
 ```
 Now, we can execute our algorithm. For example:
 ```markdown
-$ ./rcfc ../../instances/pure_integer/irp.mps +useRCFC
+$ ./vrp ../../instances/vrp-htw/r101_n20_p0.6.json -p 1
 ```
