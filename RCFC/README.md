@@ -1,6 +1,6 @@
 # RCFC
 
-This project contains the implementation of the RCFC methods for MILPs of my PhD thesis.
+This project contains the implementation of the RCFC methods for MILPs of my PhD thesis implemented for the VRP-HTW.
 It is implementend in C++ using the MINLP solver SCIP.
 
 ## Requirements
@@ -82,7 +82,15 @@ The following steps need to be followed to use our code:
      if( lp->flushed && lp->solved )
      # by:
      if( lp->flushed && lp->solved && !(lp->probing && lp->lpsolstat == SCIP_LPSOLSTAT_ITERLIMIT) )
+     #
+     # And add the following code in line 12478 in lp.c
+     if(lp->probing) //TODO: Be careful! Not checked if problematic
+     {
+     lp->solved = FALSE;
+     lp->lpsolstat = SCIP_LPSOLSTAT_NOTSOLVED;
+     }
      ```
+  
   6. In "soplex/src/" we need to add the following code to the corresponding files:
      ```markdown
      # Add this function to the SoPlexBase class in soplex.h (e.g. at line 664)
