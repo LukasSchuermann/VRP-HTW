@@ -129,5 +129,5 @@ $ make
 ```
 Now, we can execute our algorithm. For example:
 ```markdown
-$ ./rcfc ../../instances/pure_integer/irp.mps +useRCFC
+$ ./vrp ../../instances/vrp-htw/r101_n20_p0.6.json -p 1
 ```
